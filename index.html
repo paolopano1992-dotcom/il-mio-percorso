@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4e78">
+<title>Il mio percorso</title>
+<style>
+:root{--blue:#1f4e78;--bg:#f4f6f8;--card:#fff;--text:#17212b;--muted:#6b7280;--line:#e5e7eb;--ok:#dff3e4}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--blue);color:white;padding:22px 18px calc(18px + env(safe-area-inset-top));position:sticky;top:0;z-index:3}
+h1{margin:0;font-size:25px}.sub{opacity:.85;margin-top:4px}
+main{max-width:760px;margin:auto;padding:16px 14px 100px}
+.card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #0000000b}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.big{font-size:30px;font-weight:750}.muted{color:var(--muted);font-size:14px}
+.progress{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:10px 0}.bar{height:100%;background:var(--blue);width:0}
+button,.btn{border:0;border-radius:12px;padding:11px 14px;background:var(--blue);color:white;font-weight:650;font-size:15px}
+button.secondary{background:#eef2f6;color:var(--text)} button.danger{background:#f5e3e3;color:#8b1e1e}
+input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;font-size:16px;background:white}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.check{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;margin:8px 0}
+.check input{width:22px;height:22px}.tag{font-size:12px;padding:4px 8px;border-radius:99px;background:#eef2f6;color:#475569}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);display:flex;justify-content:center;gap:4px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:4}
+nav button{background:transparent;color:var(--muted);padding:9px 10px;font-size:12px}nav button.active{color:var(--blue);font-weight:800}
+.hidden{display:none}.meal{margin:8px 0;padding:12px;background:#f8fafc;border-radius:12px}.meal b{display:block;margin-bottom:4px}
+textarea{width:100%;min-height:80px;border:1px solid var(--line);border-radius:11px;padding:12px;font:inherit}
+.small{font-size:13px}.success{background:var(--ok);padding:10px;border-radius:12px}
+</style>
+</head>
+<body>
+<header><h1>Il mio percorso</h1><div class="sub">94 kg → obiettivo 78 kg</div></header>
+<main>
+<section id="home">
+<div class="card"><div class="row"><div><div class="muted">Peso di oggi</div><div class="big" id="todayWeight">— kg</div></div><button onclick="addWeight()">+ Peso</button></div>
+<div class="progress"><div class="bar" id="weightBar"></div></div><div class="muted" id="weightText">Inserisci il primo peso</div></div>
+
+<div class="card"><div class="row"><h2>🍽️ Oggi</h2><span class="tag" id="calorieTag">~1900 kcal</span></div>
+<div id="mealChecks"></div></div>
+
+<div class="card"><div class="row"><h2>🏃 Attività</h2><span class="tag" id="activityCount">0 completate</span></div>
+<div id="activityChecks"></div></div>
+
+<div class="card"><h2>☕ Caffè</h2><div class="row"><div><b id="coffeeCount">0 / 4</b><div class="muted">1 cucchiaino di zucchero per caffè</div></div><button onclick="coffee()">+ Caffè</button></div></div>
+
+<div class="card"><h2>📝 Diario veloce</h2><textarea id="quickNote" placeholder="Scrivi cosa hai mangiato o fatto..."></textarea><button style="margin-top:8px" onclick="saveNote()">Salva</button><div id="noteMsg"></div></div>
+</section>
+
+<section id="diet" class="hidden">
+<div class="card"><h2>🍴 Dieta 7 giorni</h2><div class="muted">Quantità indicative del piano concordato.</div><div id="dietContent"></div></div>
+</section>
+
+<section id="training" class="hidden">
+<div class="card"><h2>🏋️ Allenamento 8 settimane</h2><div class="muted">Massimo 2 giorni di calcio a settimana.</div><div id="trainingContent"></div></div>
+</section>
+
+<section id="progress" class="hidden">
+<div class="card"><h2>⚖️ Progressi</h2><div id="history"></div><button class="danger" onclick="resetAll()">Azzera dati</button></div>
+</section>
+</main>
+<nav>
+<button onclick="show('home')" id="n-home">🏠<br>Oggi</button>
+<button onclick="show('diet')" id="n-diet">🍴<br>Dieta</button>
+<button onclick="show('training')" id="n-training">🏋️<br>Allenamento</button>
+<button onclick="show('progress')" id="n-progress">📈<br>Progressi</button>
+</nav>
+<script>
+const KEY='percorso94';
+let data=JSON.parse(localStorage.getItem(KEY)||'{"weights":[],"checks":{},"coffee":0,"notes":[],"day":""}');
+const days=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+const meals=[
+['Colazione','250 g yogurt greco 0% + 40 g avena + frutti di bosco + 10 g mandorle'],
+['Pranzo','90 g pasta + 150–180 g pollo/tacchino + verdure + 10 g olio'],
+['Spuntino','170–200 g yogurt greco/skyr + frutto tollerato'],
+['Cena','200 g pesce bianco O alternativa magra + 250 g patate/60 g pane + verdure + 10 g olio']
+];
+const activities=['Camminata','Corsa','Forza','Calcio'];
+const plan={
+1:['35–40 min camminata/corsa','Forza A 20 min','30 min camminata','2′ corsa + 2′ cammino ×6','Forza B 20 min','Passeggiata 40–50 min','Riposo'],
+2:['30 min camminata','Forza A 20–25 min','Calcio 90 min','Recupero','Corsa/camminata 30 min','Calcio/partita 90 min','Riposo'],
+3:['Camminata veloce 35–45 min','Forza A 25 min','Calcio 90 min','Recupero','Corsa/camminata 30–40 min','Calcio oppure Forza B','Passeggiata/riposo'],
+4:['Camminata veloce 35–45 min','Forza A 25–30 min','Calcio 90 min','Recupero','Corsa/camminata 30–40 min','Calcio oppure Forza B','Passeggiata/riposo'],
+5:['Camminata veloce 40 min','Forza A 30 min','Calcio 90 min','Recupero/passeggiata','Corsa/camminata 35–40 min','Calcio oppure Forza B','Riposo'],
+6:['Camminata veloce 40 min','Forza A 30 min','Calcio 90 min','Recupero/passeggiata','Corsa/camminata 35–40 min','Calcio oppure Forza B','Riposo'],
+7:['Camminata veloce 40 min','Forza A 30 min','Calcio 90 min','Recupero','Corsa facile 25–30 min','Calcio oppure Forza B','Passeggiata/riposo'],
+8:['Camminata veloce 40 min','Forza A 30 min','Calcio 90 min','Recupero','Corsa facile 30–40 min','Calcio oppure Forza B','Riposo']
+};
+function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
+function dateKey(){return new Date().toISOString().slice(0,10)}
+function ensure(){if(data.day!==dateKey()){data.day=dateKey();data.coffee=0;data.checks={};persist()}}
+function show(id){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));document.getElementById('n-'+id).classList.add('active');if(id==='home')renderHome();if(id==='diet')renderDiet();if(id==='training')renderTraining();if(id==='progress')renderProgress()}
+function toggle(k){data.checks[k]=!data.checks[k];persist();renderHome()}
+function renderHome(){
+ensure();
+let w=data.weights[data.weights.length-1];document.getElementById('todayWeight').textContent=w?w.weight+' kg':'— kg';
+let pct=w?Math.max(0,Math.min(100,(94-w.weight)/(94-78)*100)):0;document.getElementById('weightBar').style.width=pct+'%';document.getElementById('weightText').textContent=w?`Obiettivo 78 kg · ${Math.round(pct)}% del percorso`:'Inserisci il peso';
+document.getElementById('mealChecks').innerHTML=meals.map((m,i)=>`<label class="check"><input type="checkbox" ${data.checks['m'+i]?'checked':''} onchange="toggle('m${i}')"><span><b>${m[0]}</b><span class="small">${m[1]}</span></span></label>`).join('');
+document.getElementById('activityChecks').innerHTML=activities.map((a,i)=>`<label class="check"><input type="checkbox" ${data.checks['a'+i]?'checked':''} onchange="toggle('a${i}')"><span>${a}</span></label>`).join('');
+document.getElementById('activityCount').textContent=activities.filter((_,i)=>data.checks['a'+i]).length+' completate';document.getElementById('coffeeCount').textContent=data.coffee+' / 4';
+}
+function coffee(){ensure();if(data.coffee<4)data.coffee++;persist();renderHome()}
+function addWeight(){let x=prompt('Peso di oggi (kg):');if(!x)return;let n=parseFloat(x.replace(',','.'));if(!isFinite(n)||n<40||n>250)return alert('Inserisci un peso valido.');data.weights.push({date:dateKey(),weight:n});persist();renderHome()}
+function saveNote(){let t=document.getElementById('quickNote').value.trim();if(!t)return;data.notes.push({date:dateKey(),text:t});document.getElementById('quickNote').value='';document.getElementById('noteMsg').innerHTML='<div class="success">Salvato ✓</div>';persist()}
+function renderDiet(){let html='';for(let d=0;d<7;d++){html+=`<div class="meal"><b>${days[d]}</b>${meals.map(x=>`<div><strong>${x[0]}:</strong> ${x[1]}</div>`).join('')}<div><strong>☕ Caffè:</strong> 4 con 5 g zucchero ciascuno</div></div>`}document.getElementById('dietContent').innerHTML=html}
+function renderTraining(){let html='<div class="meal"><b>Regola calcio</b>Massimo 2 giorni di calcio a settimana. Se hai 2 giorni, riduci la corsa e mantieni il recupero.</div>';for(let w=1;w<=8;w++){html+=`<div class="meal"><b>Settimana ${w}</b>${plan[w].map((x,i)=>`<div>${days[i]}: ${x}</div>`).join('')}</div>`}html+='<div class="meal"><b>Forza A</b>3 giri: 12–15 squat · 8–12 flessioni · 10 affondi/gamba · 15 ponte glutei · plank 20–30 s · 10–12 superman.</div><div class="meal"><b>Forza B</b>3 giri: 10–15 squat · 8–12 flessioni · 10 affondi/gamba · 8–12 dip su sedia stabile · plank laterale 20–30 s/lato · 15–20 calf raises.</div>';document.getElementById('trainingContent').innerHTML=html}
+function renderProgress(){let h=data.weights.slice().reverse().map(x=>`<div class="check"><span><b>${x.date}</b><br>${x.weight} kg</span></div>`).join('');document.getElementById('history').innerHTML=h||'<p class="muted">Ancora nessun peso registrato.</p>'}
+function resetAll(){if(confirm('Cancellare tutti i dati salvati?')){localStorage.removeItem(KEY);location.reload()}}
+ensure();show('home');
+</script>
+</body></html>
